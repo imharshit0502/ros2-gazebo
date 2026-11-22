@@ -1,0 +1,23 @@
+{
+    "ROS2.distro": "jazzy",
+    "python.autoComplete.extraPaths": [
+        "/home/harshit-jain/ros2_ws/install/my_py_pkg/lib/python3.12/site-packages",
+        "/home/harshit-jain/ros2_ws/install/my_robot_interfaces/lib/python3.12/site-packages",
+        "/opt/ros/jazzy/opt/gz_sim_vendor/lib/python",
+        "/opt/ros/jazzy/opt/sdformat_vendor/lib/python",
+        "/opt/ros/jazzy/opt/gz_transport_vendor/lib/python",
+        "/opt/ros/jazzy/opt/gz_msgs_vendor/lib/python",
+        "/opt/ros/jazzy/opt/gz_math_vendor/lib/python",
+        "/opt/ros/jazzy/lib/python3.12/site-packages"
+    ],
+    "python.analysis.extraPaths": [
+        "/home/harshit-jain/ros2_ws/install/my_py_pkg/lib/python3.12/site-packages",
+        "/home/harshit-jain/ros2_ws/install/my_robot_interfaces/lib/python3.12/site-packages",
+        "/opt/ros/jazzy/opt/gz_sim_vendor/lib/python",
+        "/opt/ros/jazzy/opt/sdformat_vendor/lib/python",
+        "/opt/ros/jazzy/opt/gz_transport_vendor/lib/python",
+        "/opt/ros/jazzy/opt/gz_msgs_vendor/lib/python",
+        "/opt/ros/jazzy/opt/gz_math_vendor/lib/python",
+        "/opt/ros/jazzy/lib/python3.12/site-packages"
+    ]
+}
