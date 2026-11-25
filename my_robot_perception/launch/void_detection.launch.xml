@@ -1,0 +1,33 @@
+<!--
+  SHELF VOID DETECTION
+
+  Starts the void detector on the mast camera (+ optionally an image viewer).
+  Run it NEXT TO a simulation that is already running, e.g.
+
+    ros2 launch my_robot_navigation patrol.launch.xml          # terminal 1
+    ros2 launch my_robot_perception void_detection.launch.xml  # terminal 2
+
+  or let patrol.launch.xml start it for you (void_detection:=true, the default).
+
+  Args
+    backend:=classical | shelfvoid
+    weights:=/path/to/shelfvoid_head.pt     (backend shelfvoid only)
+    viewer:=true                            open rqt_image_view on the annotated image
+    ground_truth:=<yaml> | ""               score detections against the known voids
+-->
+<launch>
+    <arg name="backend" default="classical"/>
+    <arg name="weights" default=""/>
+    <arg name="viewer" default="false"/>
+    <arg name="ground_truth" default="$(find-pkg-share my_robot_bringup)/config/shelf_voids.yaml"/>
+
+    <node pkg="my_robot_perception" exec="void_detector" name="void_detector" output="screen">
+        <param from="$(find-pkg-share my_robot_perception)/config/void_detector.yaml"/>
+        <param name="backend" value="$(var backend)"/>
+        <param name="weights_path" value="$(var weights)"/>
+        <param name="ground_truth_file" value="$(var ground_truth)"/>
+    </node>
+
+    <node pkg="rqt_image_view" exec="rqt_image_view" if="$(var viewer)"
+          args="/void_detection/image_annotated"/>
+</launch>

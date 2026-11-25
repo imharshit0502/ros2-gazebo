@@ -5,7 +5,7 @@
   direction: GZ_TO_ROS
 
 - ros_topic_name: "/joint_states"
-  gz_topic_name: "/world/empty/model/my_robot/joint_state"
+  gz_topic_name: "/world/retail_store/model/my_robot/joint_state"   # must match <world name="..."> in the .world file
   ros_type_name: "sensor_msgs/msg/JointState"
   gz_type_name: "gz.msgs.Model"
   direction: GZ_TO_ROS
@@ -32,4 +32,39 @@
   gz_topic_name: "/camera/image_raw"
   ros_type_name: "sensor_msgs/msg/Image"
   gz_type_name: "gz.msgs.Image"
-  direction: GZ_TO_ROS    
+  direction: GZ_TO_ROS
+
+# ---- Telescoping mast shelf camera ----
+- ros_topic_name: "/shelf_camera/image_raw"
+  gz_topic_name: "/shelf_camera/image_raw"
+  ros_type_name: "sensor_msgs/msg/Image"
+  gz_type_name: "gz.msgs.Image"
+  direction: GZ_TO_ROS
+
+- ros_topic_name: "/shelf_camera/camera_info"
+  gz_topic_name: "/shelf_camera/camera_info"
+  ros_type_name: "sensor_msgs/msg/CameraInfo"
+  gz_type_name: "gz.msgs.CameraInfo"
+  direction: GZ_TO_ROS
+
+# Mast extension command in metres (0.0 = retracted, 0.40 = fully up)
+- ros_topic_name: "/mast/height_cmd"
+  gz_topic_name: "/mast/height_cmd"
+  ros_type_name: "std_msgs/msg/Float64"
+  gz_type_name: "gz.msgs.Double"
+  direction: ROS_TO_GZ
+
+# ---- 2D LiDAR (used by SLAM Toolbox and Nav2) ----
+- ros_topic_name: "/scan"
+  gz_topic_name: "/scan"
+  ros_type_name: "sensor_msgs/msg/LaserScan"
+  gz_type_name: "gz.msgs.LaserScan"
+  direction: GZ_TO_ROS
+
+# Wheel odometry from the DiffDrive plugin (odom -> base_footprint).
+# The TF itself already arrives via /tf; this topic is what Nav2 reads later.
+- ros_topic_name: "/odom"
+  gz_topic_name: "/model/my_robot/odometry"
+  ros_type_name: "nav_msgs/msg/Odometry"
+  gz_type_name: "gz.msgs.Odometry"
+  direction: GZ_TO_ROS

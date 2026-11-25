@@ -5,6 +5,8 @@
     <xacro:include filename="mobile_base.xacro"/>
     <xacro:include filename="mobile_base_gazebo.xacro"/>
     <xacro:include filename="camera.xacro"/>
+    <xacro:include filename="mast.xacro"/>
+    <xacro:include filename="lidar.xacro"/>
    
 
    <!-- <xacro:macro name="example_macro" params="a b c">

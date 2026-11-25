@@ -1,0 +1,51 @@
+<!--
+  SLAM MAPPING of the retail store.
+
+  Starts  1) Gazebo + robot (my_robot_bringup), using the store WITHOUT pedestrians
+          2) SLAM Toolbox (online, asynchronous mode) -> builds /map and publishes map -> odom
+          3) RViz with a mapping layout (map, laser scan, robot)
+          4) (optional) mapping_tour.py, which drives the robot through every aisle
+
+  Usage
+    ros2 launch my_robot_navigation slam_mapping.launch.xml                  # automatic tour
+    ros2 launch my_robot_navigation slam_mapping.launch.xml auto_tour:=false # drive yourself with
+         ros2 run teleop_twist_keyboard teleop_twist_keyboard                 # (second terminal)
+
+  When the map looks complete, save it (third terminal)
+    ros2 run nav2_map_server map_saver_cli -f ~/ros2_rws/src/my_robot_navigation/maps/retail_store
+-->
+<launch>
+    <arg name="auto_tour" default="true"/>
+    <arg name="world" default="retail_store_mapping.world"/>
+
+    <!-- 1) Simulation + robot. Its own RViz is turned off; we start a SLAM-specific one below. -->
+    <!-- <group> keeps the include's arguments private. Without it, ROS 2 XML launch leaks
+         them back into this file (e.g. rviz=false below would switch OFF this file's RViz). -->
+    <group>
+        <include file="$(find-pkg-share my_robot_bringup)/launch/my_robot_gazebo.launch.xml">
+            <arg name="world" value="$(var world)"/>
+            <arg name="rviz" value="false"/>
+        </include>
+    </group>
+
+    <!-- 2) SLAM Toolbox. "async" = if scans arrive faster than they can be processed,
+            skip some instead of falling behind. Good for a live demo. -->
+    <group>
+        <include file="$(find-pkg-share slam_toolbox)/launch/online_async_launch.py">
+            <arg name="slam_params_file"
+                 value="$(find-pkg-share my_robot_navigation)/config/slam_toolbox_mapping.yaml"/>
+            <arg name="use_sim_time" value="true"/>
+        </include>
+    </group>
+
+    <!-- 3) RViz -->
+    <node pkg="rviz2" exec="rviz2" output="screen"
+          args="-d $(find-pkg-share my_robot_navigation)/rviz/slam_mapping.rviz">
+        <param name="use_sim_time" value="true"/>
+    </node>
+
+    <!-- 4) Automatic mapping tour (waits until SLAM publishes the map frame) -->
+    <node pkg="my_robot_navigation" exec="mapping_tour.py" output="screen" if="$(var auto_tour)">
+        <param name="use_sim_time" value="true"/>
+    </node>
+</launch>

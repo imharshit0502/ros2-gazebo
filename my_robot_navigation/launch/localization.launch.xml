@@ -1,0 +1,55 @@
+<!--
+  DRIVE THE ROBOT ON THE SAVED MAP (localization only, no mapping).
+
+  Starts  1) Gazebo + robot (store WITH shoppers by default)
+          2) map_server  -> publishes the saved map on /map
+          3) amcl        -> works out where the robot is on that map (map -> odom TF)
+          4) lifecycle_manager -> switches map_server and amcl on (Nav2 nodes are
+             "lifecycle" nodes: they start inactive and must be configured + activated)
+          5) RViz showing map, scan, robot and AMCL's particle cloud
+
+  Usage
+    Terminal 1:  ros2 launch my_robot_navigation localization.launch.xml
+    Terminal 2:  ros2 run teleop_twist_keyboard teleop_twist_keyboard
+-->
+<launch>
+    <arg name="world" default="retail_store.world"/>
+    <!-- patrol.launch.xml turns this off and starts its own navigation RViz -->
+    <arg name="rviz" default="true"/>
+    <arg name="headless" default="false"/>
+    <arg name="map" default="$(find-pkg-share my_robot_navigation)/maps/retail_store.yaml"/>
+    <let name="params" value="$(find-pkg-share my_robot_navigation)/config/amcl_localization.yaml"/>
+
+    <!-- 1) Simulation + robot -->
+    <!-- <group> keeps the include's arguments private. Without it, ROS 2 XML launch leaks
+         them back into this file (e.g. rviz=false below would switch OFF this file's RViz). -->
+    <group>
+        <include file="$(find-pkg-share my_robot_bringup)/launch/my_robot_gazebo.launch.xml">
+            <arg name="world" value="$(var world)"/>
+            <arg name="rviz" value="false"/>
+            <arg name="headless" value="$(var headless)"/>
+        </include>
+    </group>
+
+    <!-- 2) Saved map -->
+    <node pkg="nav2_map_server" exec="map_server" name="map_server" output="screen">
+        <param from="$(var params)"/>
+        <param name="yaml_filename" value="$(var map)"/>
+    </node>
+
+    <!-- 3) Localization -->
+    <node pkg="nav2_amcl" exec="amcl" name="amcl" output="screen">
+        <param from="$(var params)"/>
+    </node>
+
+    <!-- 4) Turn both on -->
+    <node pkg="nav2_lifecycle_manager" exec="lifecycle_manager" name="lifecycle_manager_localization" output="screen">
+        <param from="$(var params)"/>
+    </node>
+
+    <!-- 5) RViz -->
+    <node pkg="rviz2" exec="rviz2" output="screen" if="$(var rviz)"
+          args="-d $(find-pkg-share my_robot_navigation)/rviz/localization.rviz">
+        <param name="use_sim_time" value="true"/>
+    </node>
+</launch>

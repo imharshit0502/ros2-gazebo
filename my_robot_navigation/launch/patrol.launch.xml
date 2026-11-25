@@ -1,0 +1,68 @@
+<!--
+  AUTONOMOUS SHELF-INSPECTION PATROL
+
+  Starts  1) Gazebo + robot + map_server + AMCL   (localization.launch.xml)
+          2) Nav2: planner, MPPI controller, costmaps, behavior tree, recoveries ...
+          3) RViz with a navigation layout (costmaps, path, route, shelf camera image)
+          4) void_detector (my_robot_perception): boxes around empty shelf spots + alerts
+          5) shelf_patrol.py: drives HOME -> every aisle (up + down) -> HOME, avoiding
+             shelves and the walking shoppers
+
+  Usage
+    ros2 launch my_robot_navigation patrol.launch.xml                     # full autonomous demo
+    ros2 launch my_robot_navigation patrol.launch.xml auto_patrol:=false  # Nav2 only, click goals in RViz
+    ros2 launch my_robot_navigation patrol.launch.xml loops:=0            # patrol forever
+-->
+<launch>
+    <arg name="auto_patrol" default="true"/>
+    <arg name="loops" default="1"/>
+    <arg name="world" default="retail_store.world"/>
+    <arg name="headless" default="false"/>   <!-- true = no Gazebo window -->
+    <arg name="rviz" default="true"/>
+    <arg name="void_detection" default="true"/>   <!-- start the shelf-void detector -->
+    <arg name="void_backend" default="classical"/> <!-- classical | shelfvoid -->
+    <arg name="void_weights" default=""/>          <!-- shelfvoid_head.pt for void_backend:=shelfvoid -->
+    <arg name="route_file" default="$(find-pkg-share my_robot_navigation)/config/patrol_route.yaml"/>
+
+    <!-- 1) Simulation + saved map + AMCL -->
+    <!-- <group> keeps the include's arguments private. Without it, ROS 2 XML launch leaks
+         them back into this file (e.g. rviz=false below would switch OFF this file's RViz). -->
+    <group>
+        <include file="$(find-pkg-share my_robot_navigation)/launch/localization.launch.xml">
+            <arg name="world" value="$(var world)"/>
+            <arg name="rviz" value="false"/>
+            <arg name="headless" value="$(var headless)"/>
+        </include>
+    </group>
+
+    <!-- 2) Nav2 navigation servers, with our parameters -->
+    <group>
+        <include file="$(find-pkg-share nav2_bringup)/launch/navigation_launch.py">
+            <arg name="params_file" value="$(find-pkg-share my_robot_navigation)/config/nav2_params.yaml"/>
+            <arg name="use_sim_time" value="true"/>
+            <arg name="autostart" value="true"/>
+        </include>
+    </group>
+
+    <!-- 3) RViz -->
+    <node pkg="rviz2" exec="rviz2" output="screen" if="$(var rviz)"
+          args="-d $(find-pkg-share my_robot_navigation)/rviz/navigation.rviz">
+        <param name="use_sim_time" value="true"/>
+    </node>
+
+    <!-- 4) Shelf-void detection on the mast camera (my_robot_perception).
+            void_detection:=false to run navigation only; void_backend:=shelfvoid for the DINOv2 model. -->
+    <group if="$(var void_detection)">
+        <include file="$(find-pkg-share my_robot_perception)/launch/void_detection.launch.xml">
+            <arg name="backend" value="$(var void_backend)"/>
+            <arg name="weights" value="$(var void_weights)"/>
+        </include>
+    </group>
+
+    <!-- 5) Patrol mission (waits for Nav2 to be active by itself) -->
+    <node pkg="my_robot_navigation" exec="shelf_patrol.py" output="screen" if="$(var auto_patrol)">
+        <param name="use_sim_time" value="true"/>
+        <param name="loops" value="$(var loops)"/>
+        <param name="route_file" value="$(var route_file)"/>
+    </node>
+</launch>

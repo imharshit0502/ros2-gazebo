@@ -1,0 +1,38 @@
+# Parameters for void_detector (my_robot_perception/void_detector_node.py)
+void_detector:
+  ros__parameters:
+    use_sim_time: true
+
+    # ---- which detector -------------------------------------------------------
+    # classical : OpenCV shelf-rail detector, no training, tuned for the Gazebo store
+    # shelfvoid : DINOv2 ViT-S/14 + prototype head from the EE-511 notebook
+    #             (needs PyTorch and the trained head, see README / models/README.md)
+    backend: classical
+    weights_path: ""                       # e.g. ~/ros2_rws/src/my_robot_perception/models/shelfvoid_head.pt
+    shelfvoid_threshold: 0.5               # P(void) cut-off, same as notebook cell 9
+    classical_min_width_ratio: 1.0         # void must be wider than 1.0 x shelf-level height (~40 cm)
+
+    # ---- inputs ----------------------------------------------------------------
+    image_topic: /shelf_camera/image_raw
+    camera_info_topic: /shelf_camera/camera_info
+    scan_topic: /scan
+    patrol_status_topic: /patrol/status
+    world_frame: map
+    process_rate_hz: 4.0                   # lower this for the slow shelfvoid backend on CPU (e.g. 1.0)
+
+    # ---- confirmation (one alert per void, not one per frame) --------------------
+    confirm_hits: 4                        # sightings at the same place before ALERT
+    assoc_radius_m: 0.6                    # sightings closer than this are the same void
+    candidate_timeout_s: 6.0
+    min_void_width_m: 0.35                 # real width (m) below which a box is a product gap, not a void
+
+    # ---- store geometry (matches generate_retail_store_world.py) -----------------
+    default_shelf_distance_m: 1.34
+    shelf_levels_m: [0.12, 0.52, 0.92, 1.32]
+    aisle_x_m: [-7.16, -3.58, 0.0, 3.58, 7.16]
+    row_split_y_m: 1.8
+
+    # ---- scoring against the ground truth (set to "" to disable) -----------------
+    # (path is filled in by the launch file)
+    gt_match_radius_m: 0.8
+    publish_debug_image: true

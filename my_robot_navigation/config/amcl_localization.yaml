@@ -1,0 +1,80 @@
+# Localization on the SAVED map (no more map building).
+#
+# map_server  : loads maps/retail_store.yaml + .pgm and publishes it on /map.
+# amcl        : "Adaptive Monte Carlo Localization". It keeps a cloud of
+#               particles (each one = a guess of the robot pose). As the robot
+#               moves, every guess is moved by odometry, then scored by how well
+#               the current /scan lines up with the map from that guess. Bad
+#               guesses die out, good ones are copied, so the cloud shrinks onto
+#               the true pose. AMCL publishes the TF  map -> odom  (the same job
+#               SLAM Toolbox did while mapping).
+# Values follow nav2_bringup/params/nav2_params.yaml; lines marked <-- CHANGED differ.
+
+map_server:
+  ros__parameters:
+    use_sim_time: true
+    # yaml_filename is set by the launch file (so you can pass map:=...)
+
+amcl:
+  ros__parameters:
+    use_sim_time: true
+    base_frame_id: "base_footprint"
+    odom_frame_id: "odom"
+    global_frame_id: "map"
+    scan_topic: scan
+    robot_model_type: "nav2_amcl::DifferentialMotionModel"
+
+    # Start where the robot spawns. SLAM started the map at the spawn pose, so the
+    # spawn point is (0, 0) facing +x in the map. Without this you would have to
+    # click "2D Pose Estimate" in RViz every time.
+    set_initial_pose: true                 # <-- CHANGED (false)
+    initial_pose:
+      x: 0.0
+      y: 0.0
+      z: 0.0
+      yaw: 0.0
+
+    # Odometry noise model: how much AMCL spreads particles when the robot moves.
+    # Simulated wheel odometry is very accurate, so smaller than the 0.2 default.
+    alpha1: 0.1                            # <-- CHANGED (0.2) rotation noise from rotation
+    alpha2: 0.1                            # <-- CHANGED (0.2) rotation noise from translation
+    alpha3: 0.1                            # <-- CHANGED (0.2) translation noise from translation
+    alpha4: 0.1                            # <-- CHANGED (0.2) translation noise from rotation
+    alpha5: 0.2
+
+    # Laser model
+    laser_model_type: "likelihood_field"
+    laser_max_range: 20.0                  # <-- CHANGED (100.0): matches the LiDAR in lidar.xacro
+    laser_min_range: 0.12                  # <-- CHANGED (-1.0)
+    laser_likelihood_max_dist: 2.0
+    max_beams: 90                          # <-- CHANGED (60): 270 deg scan -> one beam every 3 deg
+    sigma_hit: 0.2
+    z_hit: 0.5
+    z_short: 0.05
+    z_max: 0.05
+    z_rand: 0.5                            # tolerates beams hitting things not in the map (shoppers!)
+    lambda_short: 0.1
+    do_beamskip: false
+    beam_skip_distance: 0.5
+    beam_skip_error_threshold: 0.9
+    beam_skip_threshold: 0.3
+
+    # Particle filter
+    min_particles: 500
+    max_particles: 2000
+    pf_err: 0.05
+    pf_z: 0.99
+    resample_interval: 1
+    recovery_alpha_fast: 0.0
+    recovery_alpha_slow: 0.0
+    update_min_d: 0.1                      # <-- CHANGED (0.25): update every 10 cm, smoother in RViz
+    update_min_a: 0.1                      # <-- CHANGED (0.2)
+    save_pose_rate: 0.5
+    tf_broadcast: true
+    transform_tolerance: 1.0
+
+lifecycle_manager_localization:
+  ros__parameters:
+    use_sim_time: true
+    autostart: true
+    node_names: ["map_server", "amcl"]

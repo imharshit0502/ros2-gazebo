@@ -1,29 +1,50 @@
 <launch>
-    <let name="urdf_path" 
+    <!-- Which world to load (file name inside my_robot_bringup/worlds).
+         retail_store.world         = full store with walking shoppers (default)
+         retail_store_mapping.world = same store, no shoppers (use for SLAM mapping) -->
+    <arg name="world" default="retail_store.world"/>
+    <!-- Other launch files (e.g. SLAM) can start their own RViz with a different config -->
+    <arg name="rviz" default="true"/>
+    <!-- headless:=true runs Gazebo without its window (sensors still work). Saves a lot of CPU. -->
+    <arg name="headless" default="false"/>
+
+    <let name="urdf_path"
          value="$(find-pkg-share my_robot_description)/urdf/my_robot.urdf.xacro"/>
 
     <let name="gazebo_config_path"
          value= "$(find-pkg-share my_robot_bringup)/config/gazebo_bridge.yaml"/>
 
     <let name="rviz_config_path"
-         value="$(find-pkg-share my_robot_description)/rviz/urdf_config.rviz"/>         
+         value="$(find-pkg-share my_robot_description)/rviz/urdf_config.rviz"/>
 
+    <!-- use_sim_time = follow Gazebo's /clock instead of the PC clock.
+         SLAM and Nav2 compare timestamps of scans and TFs; if some nodes used
+         wall time and others sim time, every TF lookup would fail. -->
     <node pkg="robot_state_publisher" exec="robot_state_publisher">
         <param name="robot_description"
                value="$(command 'xacro $(var urdf_path)')"/>
-    </node> 
+        <param name="use_sim_time" value="true"/>
+    </node>
+
+    <!-- headless -> add "-s" (server only, no window) and render sensors off-screen -->
+    <let name="gz_mode_args"
+         value="$(eval &quot;'-s --headless-rendering' if '$(var headless)' == 'true' else ''&quot;)"/>
 
     <include file="$(find-pkg-share ros_gz_sim)/launch/gz_sim.launch.py">
         <!--<arg name="gz_args" value="empty.sdf -r"/>-->
         <!--<arg name="gz_args" value="$(find-pkg-share my_robot_bringup)/worlds/test_world.sdf -r"/>-->
-        <arg name="gz_args" value="$(find-pkg-share my_robot_bringup)/worlds/retail_store.world -r"/>
-   </include>    
+        <arg name="gz_args" value="$(find-pkg-share my_robot_bringup)/worlds/$(var world) -r $(var gz_mode_args)"/>
+    </include>
 
     <node pkg="ros_gz_sim" exec="create" args="-topic robot_description"/>
 
     <node pkg="ros_gz_bridge" exec="parameter_bridge">
         <param name="config_file" value="$(var gazebo_config_path)"/>
+        <param name="use_sim_time" value="true"/>
     </node>
 
-    <node pkg="rviz2" exec="rviz2" output="screen" args="-d $(var rviz_config_path)"/>
+    <node pkg="rviz2" exec="rviz2" output="screen" args="-d $(var rviz_config_path)"
+          if="$(var rviz)">
+        <param name="use_sim_time" value="true"/>
+    </node>
 </launch>

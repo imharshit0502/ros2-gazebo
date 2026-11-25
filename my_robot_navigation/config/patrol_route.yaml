@@ -1,0 +1,45 @@
+# Shelf-inspection patrol route  (read by scripts/shelf_patrol.py)
+#
+# Coordinates are in the `map` frame, which is the same as the Gazebo world frame
+# (metres, x = East, y = North, yaw in degrees: 0 = East, 90 = North).
+#
+#   Aisle centres  x = -7.16 (A1), -3.58 (A2), 0 (A3), +3.58 (A4), +7.16 (A5)
+#   y = -3.75  front promenade (south end of every aisle)
+#   y = +7.80  back corridor   (north end of every aisle)
+#
+# WHY UP *AND* DOWN EVERY AISLE?
+#   The shelf camera on the mast looks out of the robot's LEFT side.
+#     driving NORTH -> left is WEST -> camera sees the shelf on the west side of the aisle
+#     driving SOUTH -> left is EAST -> camera sees the shelf on the east side
+#   So one trip up + one trip down covers both shelf faces of an aisle.
+#
+# FIELDS
+#   name    : printed in the terminal
+#   x, y    : goal position
+#   yaw_deg : heading the robot should have AT the waypoint = direction of the NEXT leg,
+#             so it turns at the waypoint and starts the next leg already lined up
+#   inspect : shelf faces the camera sees WHILE DRIVING TO this waypoint
+#             (empty = just moving, nothing to inspect). Published on /patrol/status
+#             so the void-detection node can tag every detection with its shelf.
+#
+# Shelf names follow config/shelf_voids.yaml in my_robot_bringup:
+#   gondolas S1..S4 (south row), N1..N4 (north row), faces -W / -E; wall shelves WALL_W, WALL_E
+
+home: {name: "HOME (aisle 3, start + finish)", x: 0.0, y: 0.0, yaw_deg: 0.0}
+
+waypoints:
+  - {name: "Aisle 1 - south end",  x: -7.16, y: -3.75, yaw_deg: 90,  inspect: ""}
+  - {name: "Aisle 1 - north end",  x: -7.16, y: 7.80,  yaw_deg: -90, inspect: "WALL_W"}
+  - {name: "Aisle 1 - south end",  x: -7.16, y: -3.75, yaw_deg: 0,   inspect: "S1-W, N1-W"}
+  - {name: "Aisle 2 - south end",  x: -3.58, y: -3.75, yaw_deg: 90,  inspect: ""}
+  - {name: "Aisle 2 - north end",  x: -3.58, y: 7.80,  yaw_deg: -90, inspect: "S1-E, N1-E"}
+  - {name: "Aisle 2 - south end",  x: -3.58, y: -3.75, yaw_deg: 0,   inspect: "S2-W, N2-W"}
+  - {name: "Aisle 3 - south end",  x: 0.0,   y: -3.75, yaw_deg: 90,  inspect: ""}
+  - {name: "Aisle 3 - north end",  x: 0.0,   y: 7.80,  yaw_deg: -90, inspect: "S2-E, N2-E"}
+  - {name: "Aisle 3 - south end",  x: 0.0,   y: -3.75, yaw_deg: 0,   inspect: "S3-W, N3-W"}
+  - {name: "Aisle 4 - south end",  x: 3.58,  y: -3.75, yaw_deg: 90,  inspect: ""}
+  - {name: "Aisle 4 - north end",  x: 3.58,  y: 7.80,  yaw_deg: -90, inspect: "S3-E, N3-E"}
+  - {name: "Aisle 4 - south end",  x: 3.58,  y: -3.75, yaw_deg: 0,   inspect: "S4-W, N4-W"}
+  - {name: "Aisle 5 - south end",  x: 7.16,  y: -3.75, yaw_deg: 90,  inspect: ""}
+  - {name: "Aisle 5 - north end",  x: 7.16,  y: 7.80,  yaw_deg: -90, inspect: "S4-E, N4-E"}
+  - {name: "Aisle 5 - south end",  x: 7.16,  y: -3.75, yaw_deg: 180, inspect: "WALL_E"}
